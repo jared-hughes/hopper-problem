@@ -3,7 +3,8 @@ from dataclasses import dataclass
 
 @dataclass
 class LinComb:
-    """ Represents `c + k * E[a]` """
+    """Represents `c + k * E[a]`"""
+
     c: float
     k: float
     a: int
@@ -21,16 +22,12 @@ class LinComb:
             return self
         else:
             next = LinComb(
-                self.c + self.k * E[self.a].c,
-                self.k * E[self.a].k,
-                self.a+1
+                self.c + self.k * E[self.a].c, self.k * E[self.a].k, self.a + 1
             )
             return next.deepest()
 
 
-E = [
-    LinComb(0, 0, 0)
-]
+E = [LinComb(0, 0, 0)]
 
 
 def hopper2(depth: int):
@@ -52,16 +49,10 @@ def hopper2(depth: int):
         (1 - k * u) E[a] = (1+u*c) + (1/(1+2^a))E[a+1]
         E[a] = (1+u*c)/(1-k*u) + (1/((1+2^a)(1-k*u)))E[a+1]
         """
-        tot = 1 + 2**a
-        u = 2**a / tot
-        denom = 1 - E[a-1].k * u
-        E.append(
-            LinComb(
-                (1 + u * E[a-1].c)/denom,
-                1/(tot * denom),
-                a+1
-            )
-        )
+        tot = 1 + 2 ** a
+        u = 2 ** a / tot
+        denom = 1 - E[a - 1].k * u
+        E.append(LinComb((1 + u * E[a - 1].c) / denom, 1 / (tot * denom), a + 1))
 
     print(1 + E[1].deepest().c)
 
