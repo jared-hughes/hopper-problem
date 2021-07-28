@@ -5,12 +5,13 @@ from multiset import FrozenMultiset
 import heapq
 import numpy as np
 from tabulate import tabulate
+from functools import lru_cache
 
 
 class State(FrozenMultiset):
+    @lru_cache(maxsize=None)
     def with_val_picked(self, val):
         assert val in self
-        copy = self.copy()
         if val == 1:
             mapping = {(2 * v): mult for v, mult in self.items()}
             # One 1 does not turn into a 2
