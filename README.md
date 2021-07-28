@@ -6,22 +6,23 @@ Provided that they all start with 1 ball inside of the hopper, on average, how l
 
 ## Miscellaneous notes
 
-Accurate N=2: 3.2832651213103072
+Accurate N=2 using series expansion: 3.2832651213103072
 
 Best values:
 
-(seems to have some floating error for n=2; maybe accumulated error or it converts the float64 (double-precision) to a float32 (single-precision) somewhere in the numpy/scipy defaults)
-
 ```
-n k     => hopperN(n, k)
-2 1000  => 3.2832652100438295
-3 1000  => 9.012316647938068
-4 1000  => 23.10317390203275
-5 1000  => 57.12100510590423
-6 2500  => 138.1000234542387
-7 10000 => 328.8338240965604
-8 15000 => 774.4096102090282
-9 20000 => 1808.5743380528809
+n k    → hopperN(n, k)
+2 1000 → 3.2832651213103077
+3 1000 → ≥9.012315262795905
+4 1000 → ≥23.10316401473495
+5 1000 → ≥57.120945265786446
+6 2500 → ≥138.09967578103917
+7 10000 → ≥328.83258522058964
+8 15000 → ≥774.401520361932
+9 20000 → ≥1808.5385603901827
+10 20000 → ≥4196.0587932892395
+11 20000 → ≥9658.46111659968
+12 20000 → ≥18997.898543469342
 ```
 
 Rate of convergence:
