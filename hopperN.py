@@ -1,13 +1,13 @@
 import scipy.sparse
 import scipy.sparse.linalg
 from dataclasses import dataclass
-from multiset import Multiset
+from multiset import FrozenMultiset
 import heapq
 import numpy as np
 from tabulate import tabulate
 
 
-class State(Multiset):
+class State(FrozenMultiset):
     def with_val_picked(self, val):
         assert val in self
         copy = self.copy()
@@ -20,59 +20,72 @@ class State(Multiset):
         else:
             # Double everything, but divide by 2 since 2 is a common factor
             # Cancels out, so just copy
-            copy = self.copy()
+            mapping = {v: mult for v, mult in self.items()}
             # One val does not turn into a 2*val
             # Divided by 2, so one val/2 does not turn into a val
-            copy[val] -= 1
-            copy[val // 2] += 1
-            return copy
+            mapping[val] -= 1
+            half = val // 2
+            mapping[half] = 1 if half not in mapping else mapping[half] + 1
+            return State(mapping)
 
 
-def hopperN(n: int, k: int):
-    """Select k states depth-first, then treat all higher states as 0 and solve"""
+def get_states(n: int, k: int):
     final_state = State({1: n})
     root = State({1: 1, 2: n - 1})
-    states = [root]
+    # I had trouble getting OrderedSet to work, so effectively making my own
+    states_ordered = [root]
+    state_to_index = {root: 0}
     # The state heap is a min-heap, so in order to get the state
     # with the highest probability, we index using the negative of the probability
     state_heap = [(-1, root)]
 
-    while len(states) < k:
+    while len(states_ordered) < k:
         assert len(state_heap) > 0
         from_prob_neg, from_state = heapq.heappop(state_heap)
         for val in from_state.distinct_elements():
             next_state = from_state.with_val_picked(val)
-            if next_state != final_state and next_state not in states:
-                states.append(next_state)
+            if next_state != final_state and next_state not in state_to_index:
+                states_ordered.append(next_state)
+                state_to_index[next_state] = len(states_ordered) - 1
                 state_heap.append(
                     (from_prob_neg * val / sum(from_state), next_state))
-                if len(states) >= k:
+                if len(states_ordered) >= k:
                     break
 
-    """ Compute transition matrix """
+    return states_ordered, state_to_index
+
+
+def get_transition_matrix(k, states_ordered, state_to_index):
     # transition_mat[i, j] is the probability of transitioning from state i to state j
     transition_mat = scipy.sparse.dok_matrix((k, k), dtype=np.float32)
 
-    for from_index, from_state in enumerate(states):
+    for from_index, from_state in enumerate(states_ordered):
         for val in from_state.distinct_elements():
-            next_state = from_state.with_val_picked(val)
-            for to_index, to_state in enumerate(states):
-                if next_state == to_state:
-                    prob = val * from_state[val] / sum(from_state)
-                    transition_mat[from_index, to_index] = prob
-                    break
+            to_state = from_state.with_val_picked(val)
+            if to_state in state_to_index:
+                to_index = state_to_index[to_state]
+                prob = val * from_state[val] / sum(from_state)
+                transition_mat[from_index, to_index] = prob
 
-    """ Solve """
+    return transition_mat
 
-    # Solve Tx+(1 1 ... 1 1)=x where T is the transition matrix
-    # (I_n-T)x=(1 1 ... 1 1)
-    # Ax=b
 
+def solve_transition_matrix(k, transition_mat):
+    # Solve Tx+(1 1 ... 1 1) = x where T is the transition matrix
+    # (I_n-T)x = (1 1 ... 1 1)
+    # Ax = b
     A = scipy.sparse.identity(k) - transition_mat
     b = np.ones((k, 1))
+    return scipy.sparse.linalg.spsolve(A, b)
 
-    sol = scipy.sparse.linalg.spsolve(A, b)
 
+def hopperN(n: int, k: int):
+    if n == 1:
+        return 1
+    assert n > 1
+    states_ordered, state_to_index = get_states(n, k)
+    transition_mat = get_transition_matrix(k, states_ordered, state_to_index)
+    sol = solve_transition_matrix(k, transition_mat)
     # We're looking for 1+E[(1,2,2,...2)]
     return 1 + sol[0]
 
