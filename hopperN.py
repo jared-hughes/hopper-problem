@@ -57,7 +57,11 @@ def get_states(n: int, k: int):
 
 def get_transition_matrix(k, states_ordered, state_to_index):
     # transition_mat[i, j] is the probability of transitioning from state i to state j
-    transition_mat = scipy.sparse.dok_matrix((k, k), dtype=np.float32)
+    # transition_mat = scipy.sparse.dok_matrix((k, k), dtype=np.float32)
+
+    data = []
+    i = []
+    j = []
 
     for from_index, from_state in enumerate(states_ordered):
         for val in from_state.distinct_elements():
@@ -65,9 +69,12 @@ def get_transition_matrix(k, states_ordered, state_to_index):
             if to_state in state_to_index:
                 to_index = state_to_index[to_state]
                 prob = val * from_state[val] / sum(from_state)
-                transition_mat[from_index, to_index] = prob
+                i.append(from_index)
+                j.append(to_index)
+                data.append(prob)
 
-    return transition_mat
+    # The square matrix A will be converted into CSC or CSR form
+    return scipy.sparse.coo_matrix((data, (i, j)), shape=(k, k))
 
 
 def solve_transition_matrix(k, transition_mat):
