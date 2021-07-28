@@ -48,8 +48,8 @@ def get_states(n: int, k: int):
             if next_state != final_state and next_state not in state_to_index:
                 states_ordered.append(next_state)
                 state_to_index[next_state] = len(states_ordered) - 1
-                state_heap.append(
-                    (from_prob_neg * val / sum(from_state), next_state))
+                heap_item = (from_prob_neg * val / sum(from_state), next_state)
+                heapq.heappush(state_heap, heap_item)
                 if len(states_ordered) >= k:
                     break
 
@@ -119,11 +119,14 @@ def bests():
         (7, 10000),
         (8, 15000),
         (9, 20000),
+        (10, 20000),
+        (11, 20000),
+        (12, 20000)
     ]
-    print("n", "k", "=>", "hopperN(n, k)")
+    print("n", "k", "→ ", "hopperN(n, k)")
     for n, k in nk:
-        print(n, k, "=>", hopperN(n, k))
+        print(f"{n} {k} → ≥{hopperN(n, k)}")
 
 
 if __name__ == "__main__":
-    table()
+    bests()
